@@ -15,10 +15,10 @@ class HyperoptObjective(object):
         self.model = model
         self.constant_params = const_params
         self.fit_params = fit_params
-        if self.y_train.dtype == 'object':  # Handle categorical target variable
-            le = LabelEncoder()
-            self.y_train = le.fit_transform(self.y_train)
-            self.y_test = le.fit_transform(self.y_test)
+        # if self.y_train.dtype == 'object':  # Handle categorical target variable
+        #     le = LabelEncoder()
+        #     self.y_train = le.fit_transform(self.y_train)
+        #     self.y_test = le.fit_transform(self.y_test)
 
     def __call__(self, hyper_params):
         model = self.model(**hyper_params, **self.constant_params)

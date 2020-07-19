@@ -2,6 +2,7 @@ import glob
 
 import pandas as pd
 from pathlib import Path
+from sklearn.preprocessing import LabelEncoder
 
 from src.train_on_dataset import outer_cv
 import logging
@@ -31,8 +32,15 @@ for cls_dataset in glob.glob('../classification_datasets/*.csv'):
     df = pd.read_csv(cls_dataset)
     X = df[df.columns[:-1]]
     y = df[df.columns[-1]]
+
+    if y.dtype == 'object':  # Handle categorical target variable
+        le = LabelEncoder()
+        y = pd.Series(le.fit_transform(y))
+
+
     try:
         results_df = outer_cv(X, y, results_df, record)
         results_df.to_csv(RESULTS_FILENAME, index=False)
-    except:
+    except Exception as e:
+        print(e)
         logger.info("FAILED TO RUN ON {f}".format(f=dataset_name))

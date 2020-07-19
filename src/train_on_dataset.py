@@ -105,6 +105,7 @@ def outer_cv(X, y, results_df, record, n_splits=10):
 
         X_test = X.iloc[tset_ind].copy()
         y_test = y.iloc[tset_ind].copy()
+
         best_params, trials, fit_time, model = inner_cv_hyperopt(X_train, y_train)
 
         best_metrics = evaluate_metrics(model, X_test, y_test)
