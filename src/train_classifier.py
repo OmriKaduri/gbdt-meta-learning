@@ -24,10 +24,11 @@ results_file = Path(RESULTS_FILENAME)
 if results_file.is_file():
     results_df = pd.read_csv(RESULTS_FILENAME)
 
-model_name = 'fastbdt'
-# model_name = 'catboost'
+# model_name = 'fastbdt'
+model_name = 'catboost'
 
 for cls_dataset in glob.glob('../classification_datasets/*.csv'):
+# for cls_dataset in glob.glob('../classification_datasets/post-operative.csv'):
     dataset_name = Path(cls_dataset).stem
     if dataset_name in results_df.Dataset.unique():
         print("Skipping already fitted dataset: {f}".format(f=dataset_name))

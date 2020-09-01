@@ -1,6 +1,6 @@
 import numpy as np
-# from catboost import CatBoostClassifier
-from sklearn.model_selection import KFold
+from catboost import CatBoostClassifier
+from sklearn.model_selection import StratifiedKFold
 import hyperopt
 
 from src.metrics import evaluate_metrics
@@ -79,7 +79,7 @@ def _get_model_and_params(model_name):
 def inner_cv_hyperopt(X, y, model_name, n_splits=3):
     model, const_params, parameter_space, ovr = _get_model_and_params(model_name)
 
-    kf = KFold(n_splits=n_splits, shuffle=True)
+    kf = StratifiedKFold(n_splits=n_splits, shuffle=True)
 
     best_auc = 0
     for index, (tr_ind, test_ind) in enumerate(kf.split(X, y)):
@@ -109,7 +109,7 @@ def inner_cv_hyperopt(X, y, model_name, n_splits=3):
         )
 
         fnvals = [(t['result']) for t in trials.trials]
-        params = max(fnvals, key=lambda x: x['loss'])
+        params = max(fnvals, key=lambda x: -x['loss'])
         if -params['loss'] > best_auc:
             best_auc = -params['loss']
             fit_time = params['fit_time']
@@ -122,7 +122,7 @@ def inner_cv_hyperopt(X, y, model_name, n_splits=3):
 
 def outer_cv(X, y, results_df, record, n_splits=10, model_name='catboost'):
     df = results_df.copy()
-    kf = KFold(n_splits=n_splits, shuffle=True)
+    kf = StratifiedKFold(n_splits=n_splits, shuffle=True)
     for index, (tr_ind, tset_ind) in enumerate(kf.split(X, y)):
         print("Starting {i} fold out of {n} outher folds".format(i=index, n=n_splits))
 
@@ -131,6 +131,15 @@ def outer_cv(X, y, results_df, record, n_splits=10, model_name='catboost'):
 
         X_test = X.iloc[tset_ind].copy()
         y_test = y.iloc[tset_ind].copy()
+        if set(y_train) - set(y_test) != {}:
+            drop_indices = y_train[y_train.isin(list(set(y_train) - set(y_test)))].index
+            y_train = y_train.drop(drop_indices)
+            X_train = X_train.drop(drop_indices)
+            y_train_labels = list(set(y_train))
+            y_train_labels.sort()
+            fix_labels = {k: v for v, k in enumerate(y_train_labels)}
+            y_train = y_train.replace(fix_labels)
+            y_test = y_test.replace(fix_labels)
 
         best_params, trials, fit_time, model = inner_cv_hyperopt(X_train, y_train, model_name=model_name)
 
